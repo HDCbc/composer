@@ -62,7 +62,10 @@ WORKDIR /app/
 COPY . .
 RUN sed -i -e "s/localhost:27017/hubdb:27017/" config/mongoid.yml; \
     chown -R app:app /app/; \
-    /sbin/setuser app bundle install --path vendor/bundle
+    /sbin/setuser app bundle install --path vendor/bundle; \
+    cd /app/util/demographicsImporter/; \
+    npm install mongodb -g; \
+    npm link mongodb
 
 
 # Create startup script and make it executable
