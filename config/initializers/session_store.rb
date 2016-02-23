@@ -1,6 +1,7 @@
 # Be sure to restart your server when you modify this file.
 
-QueryComposer::Application.config.session_store :cookie_store, key: '_query-composer_session'
+QueryComposer::Application.config.session_store :cookie_store, key: '_query-composer_session',
+                                                               secure: Rails.env.production?
 
 # Use the database for sessions instead of the cookie-based default,
 # which shouldn't be used to store highly confidential information

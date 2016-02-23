@@ -47,6 +47,9 @@ module QueryComposer
     # Enable the asset pipeline
     config.assets.enabled = true
     
+    # Force SSL (prevents session hijacking)
+    config.force_ssl = true
+
     # add devise views
     config.paths["app/views/devise"] 
   end
