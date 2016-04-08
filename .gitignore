@@ -16,3 +16,4 @@ generate_nagios3_config.sh~
 Gemfile.lock
 vendor/
 .directory
+.DS_Store
