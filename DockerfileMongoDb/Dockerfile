@@ -85,13 +85,25 @@ RUN mkdir -p /etc/service/mongod/; \
 		chmod +x ${SCRIPT}
 
 
-# Maintenance script and cron job
+# Create Mongo maintenance script and add to cron
 #
-RUN SCRIPT=/app/mongo_maint.sh; \
+RUN SCRIPT=/mongoDump.sh; \
 	  ( \
-	    echo "# Run database dump/maintenance script (boot, 2 PST = 10 UTC)"; \
-			echo "@reboot ${SCRIPT}"; \
-	    echo "0 10 * * * ${SCRIPT}"; \
+	    echo '#!/bin/bash'; \
+	    echo ''; \
+	    echo 'set -e -o nounset'; \
+      echo ''; \
+      echo ''; \
+      echo '# Wait for Mongod to start (important at boot), then dump'; \
+      echo 'sleep 30'; \
+      echo 'mongodump --out /data/dump/'; \
+	  )  \
+	    >> ${SCRIPT}; \
+		chmod +x ${SCRIPT}; \
+	  ( \
+	    echo '# Run database dump script (boot, 2 PST = 10 UTC)'; \
+			echo '@reboot '${SCRIPT}; \
+	    echo '0 10 * * * '${SCRIPT}; \
 	  ) \
 	    | crontab -
 
