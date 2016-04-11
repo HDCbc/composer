@@ -111,7 +111,6 @@ RUN SRV=delayed_job; \
     chmod +x /etc/service/${SRV}/run
 
 
-
 # Batch query scheduling in cron
 #
 RUN ( \
@@ -135,17 +134,3 @@ VOLUME /app/util/job_params/
 VOLUME /home/autossh/.ssh/
 VOLUME /etc/ssh/
 VOLUME /root/.ssh/
-
-
-################################################################################
-# Temporary fix until ssh bug is patched (http://undeadly.org/cgi?action=article&sid=20160114142733)
-################################################################################
-
-
-RUN ( \
-      echo ""; \
-      echo "# Temporary ssh bug fix"; \
-      echo "# "; \
-      echo "Host *"; \
-      echo "UseRoaming no"; \
-  ) | tee -a /etc/ssh/ssh_config
