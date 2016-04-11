@@ -53,7 +53,10 @@ RUN ( \
 # Enable ssh and create user for autossh tunnel
 #
 RUN rm -f /etc/service/sshd/down; \
-    adduser --quiet --disabled-password --home /home/autossh autossh 2>&1
+    adduser --quiet --disabled-password --home /home/autossh autossh 2>&1; \
+    -p /home/autossh/.ssh/; \
+    touch /home/autossh/.ssh/authorized_keys; \
+    chown -R autossh:autossh /home/autossh/.ssh/
 
 
 # Prepare /app/ folder
@@ -74,13 +77,6 @@ RUN SRV=rails; \
     mkdir -p /etc/service/${SRV}/; \
     ( \
       echo "#!/bin/bash"; \
-      echo ""; \
-      echo ""; \
-      echo "# Create Endpoint public keys file (authorized_keys), if necessary"; \
-      echo "#"; \
-      echo "mkdir -p /home/autossh/.ssh/"; \
-      echo "touch /home/autossh/.ssh/authorized_keys"; \
-      echo "chown -R autossh:autossh /home/autossh/.ssh/"; \
       echo ""; \
       echo ""; \
       echo "# Start service"; \
