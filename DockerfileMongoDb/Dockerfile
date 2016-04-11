@@ -55,4 +55,4 @@ RUN SCRIPT=/mongoDump.sh; \
 # Volume
 #
 RUN mkdir -p /data/dump/
-VOLUME /data/dump/
+VOLUME /data/dump

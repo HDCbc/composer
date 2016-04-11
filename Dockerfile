@@ -126,7 +126,7 @@ CMD ["/sbin/my_init"]
 EXPOSE 2774
 EXPOSE 3002
 #
-VOLUME /app/util/job_params/
-VOLUME /home/autossh/.ssh/
-VOLUME /etc/ssh/
-VOLUME /root/.ssh/
+VOLUME /app/util/job_params
+VOLUME /home/autossh/.ssh
+VOLUME /etc/ssh
+VOLUME /root/.ssh
