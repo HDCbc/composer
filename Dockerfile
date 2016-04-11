@@ -54,7 +54,7 @@ RUN ( \
 #
 RUN rm -f /etc/service/sshd/down; \
     adduser --quiet --disabled-password --home /home/autossh autossh 2>&1; \
-    -p /home/autossh/.ssh/; \
+    mkdir -p /home/autossh/.ssh/; \
     touch /home/autossh/.ssh/authorized_keys; \
     chown -R autossh:autossh /home/autossh/.ssh/
 
