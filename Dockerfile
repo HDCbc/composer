@@ -46,12 +46,20 @@ RUN ( \
   ) | tee -a /etc/ssh/ssh_config
 
 
-# Enable ssh and create user for autossh tunnel
+# SSH config
 #
-RUN adduser --quiet --disabled-password --home /home/autossh autossh 2>&1; \
-    rm -f /etc/service/sshd/down; \
-    sed -i 's/^#AuthorizedKeysFile.*/AuthorizedKeysFile\t\/config\/authorized_keys/' \
-      /etc/ssh/sshd_config
+RUN rm -f /etc/service/sshd/down; \
+  sed -i \
+    -e 's/#HostKey \/etc/HostKey \/config/' \
+    -e 's/^#AuthorizedKeysFile.*/AuthorizedKeysFile\t\/config\/authorized_keys/' \
+    /etc/ssh/sshd_config; \
+  ( \
+      echo ''; \
+      echo '# Keep connections alive, 60 second interval'; \
+      echo '# '; \
+      echo 'Host *'; \
+      echo 'ServerAliveInterval 60'; \
+  ) | tee -a /etc/ssh/ssh_config
 
 
 # Prepare /app/ folder
@@ -128,6 +136,4 @@ CMD ["/sbin/my_init"]
 EXPOSE 2774
 EXPOSE 3002
 #
-RUN mkdir -p /config/
 VOLUME /config
-VOLUME /etc/ssh
