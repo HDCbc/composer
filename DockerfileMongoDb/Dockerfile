@@ -1,7 +1,7 @@
 # Dockerfile for the HDC's ComposerDb service
 #
 #
-# HubDB for HDC-collected aggregate data.
+# Mongo database for HDC-collected aggregate data.
 #
 # Example:
 # sudo docker pull healthDataCoalition/composerDb
@@ -20,7 +20,7 @@ ENV TERM xterm
 ENV DEBIAN_FRONTEND noninteractive
 
 
-# Install cron and add it to the existing entrypoint.sh
+# Install cron and add it to Mongo's existing entrypoint.sh
 #
 RUN apt-get update; \
     apt-get install -y \
@@ -34,7 +34,7 @@ RUN apt-get update; \
 RUN SCRIPT=/mongoDump.sh; \
 	  ( \
 	    echo '#!/bin/bash'; \
-	    echo ''; \
+	    echo '#'; \
 	    echo 'set -e -o nounset'; \
       echo ''; \
       echo ''; \

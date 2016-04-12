@@ -1,12 +1,12 @@
 # Dockerfile for the PDC's Composer (a.k.a. Hub) service
 #
 #
-# Composer for aggregate data queries. Links to HubDB.
+# Composer for aggregate data queries. Links to ComposerDb.
 #
 # Example:
 # sudo docker pull pdcbc/composer
 # sudo docker run -d --name=composer -h composer --restart=always \
-#   --link hubdb:hubdb \
+#   --link composerdb:database \
 #   -p 2774:22 \
 #   -p 3002:3002 \
 #   -v /pdc/data/config/ssh/authorized_keys/:/home/autossh/.ssh/:ro \
@@ -16,7 +16,7 @@
 #   pdcbc/dclapi
 #
 # Linked containers
-# - HubDB:           --link hubdb:hubdb
+# - Mongo database:  --link composerdb:database
 #
 # External ports
 # - AutoSSH:         -p <hostPort>:22
@@ -63,7 +63,7 @@ RUN rm -f /etc/service/sshd/down; \
 #
 WORKDIR /app/
 COPY . .
-RUN sed -i -e "s/localhost:27017/hubdb:27017/" config/mongoid.yml; \
+RUN sed -i -e "s/localhost:27017/database:27017/" config/mongoid.yml; \
     chown -R app:app /app/; \
     /sbin/setuser app bundle install --path vendor/bundle; \
     cd /app/util/demographicsImporter/; \
