@@ -60,10 +60,7 @@ WORKDIR /app/
 COPY . .
 RUN sed -i -e 's/localhost:27017/database:27017/' config/mongoid.yml; \
     chown -R app:app /app/; \
-    /sbin/setuser app bundle install --path vendor/bundle; \
-    cd /app/util/demographicsImporter/; \
-    npm install mongodb -g; \
-    npm link mongodb
+    /sbin/setuser app bundle install --path vendor/bundle
 
 
 # Create startup script and make it executable
@@ -120,7 +117,7 @@ RUN ( \
 
 # Run Command
 #
-CMD ['/sbin/my_init']
+CMD ["/sbin/my_init"]
 
 
 # Ports and volumes
