@@ -9,11 +9,9 @@
 #   --link composerdb:database \
 #   -p 2774:22 \
 #   -p 3002:3002 \
-#   -v /pdc/data/config/ssh/authorized_keys/:/home/autossh/.ssh/:ro \
-#   -v /pdc/data/config/ssh/known_hosts/:/root/.ssh/:rw \
-#   -v /pdc/data/config/ssh/ssh_keys_hub/:/etc/ssh/:rw \
-#   -v /pdc/data/config/scheduled_jobs/:/app/util/job_params:rw  \
-#   pdcbc/dclapi
+#   -v /pdc/config/composer:/config:rw \
+#   -v /pdc/config/composer_keys:/etc/ssh:rw \
+#   healthdatacoalition/composer
 #
 # Linked containers
 # - Mongo database:  --link composerdb:database
@@ -24,9 +22,7 @@
 #
 # Folder paths
 # - authorized_keys: -v </path/>:/home/autossh/.ssh/:ro
-# - known_hosts:     -v </path/>:/root/.ssh/:rw
 # - SSH keys:        -v </path/>:/etc/ssh/:rw
-# - job params:      -v </path/>:/app/util/job_params/:rw
 #
 #
 FROM phusion/passenger-ruby19
@@ -39,7 +35,7 @@ ENV TERM xterm
 ENV DEBIAN_FRONTEND noninteractive
 
 
-# Keep server-initiated connections from timing out (not for autossh!)
+# Keep outgoing (admin tunnel) connections from timing out
 #
 RUN ( \
       echo ""; \
@@ -52,11 +48,10 @@ RUN ( \
 
 # Enable ssh and create user for autossh tunnel
 #
-RUN rm -f /etc/service/sshd/down; \
-    adduser --quiet --disabled-password --home /home/autossh autossh 2>&1; \
-    mkdir -p /home/autossh/.ssh/; \
-    touch /home/autossh/.ssh/authorized_keys; \
-    chown -R autossh:autossh /home/autossh/.ssh/
+RUN adduser --quiet --disabled-password --home /home/autossh autossh 2>&1; \
+    rm -f /etc/service/sshd/down; \
+    sed -i 's/^#AuthorizedKeysFile.*/AuthorizedKeysFile\t\/config\/authorized_keys/' \
+      /etc/ssh/sshd_config
 
 
 # Prepare /app/ folder
@@ -126,7 +121,6 @@ CMD ["/sbin/my_init"]
 EXPOSE 2774
 EXPOSE 3002
 #
-VOLUME /app/util/job_params
-VOLUME /home/autossh/.ssh
+RUN mkdir -p /config/
+VOLUME /config
 VOLUME /etc/ssh
-VOLUME /root/.ssh
