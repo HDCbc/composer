@@ -1,16 +1,15 @@
-# Dockerfile for the PDC's Composer (a.k.a. Hub) service
+# Dockerfile for the PDC's Composer service
 #
 #
 # Composer for aggregate data queries. Links to ComposerDb.
 #
 # Example:
-# sudo docker pull pdcbc/composer
+# sudo docker pull healthdatacoalition/composer
 # sudo docker run -d --name=composer -h composer --restart=always \
 #   --link composerdb:database \
 #   -p 2774:22 \
 #   -p 3002:3002 \
-#   -v /pdc/config/composer:/config:rw \
-#   -v /pdc/config/composer_keys:/etc/ssh:rw \
+#   -v </path/>/composer:/config:rw \
 #   healthdatacoalition/composer
 #
 # Linked containers
@@ -21,8 +20,7 @@
 # - Web UI:          -p <hostPort>:3002
 #
 # Folder paths
-# - authorized_keys: -v </path/>:/home/autossh/.ssh/:ro
-# - SSH keys:        -v </path/>:/etc/ssh/:rw
+# - config:          -v </path/>:/config/:rw
 #
 #
 FROM phusion/passenger-ruby19
@@ -33,17 +31,6 @@ MAINTAINER derek.roberts@gmail.com
 #
 ENV TERM xterm
 ENV DEBIAN_FRONTEND noninteractive
-
-
-# Keep outgoing (admin tunnel) connections from timing out
-#
-RUN ( \
-      echo ""; \
-      echo "# Keep connections alive, 60 second interval"; \
-      echo "# "; \
-      echo "Host *"; \
-      echo "ServerAliveInterval 60"; \
-  ) | tee -a /etc/ssh/ssh_config
 
 
 # SSH config
@@ -62,11 +49,16 @@ RUN rm -f /etc/service/sshd/down; \
   ) | tee -a /etc/ssh/ssh_config
 
 
+# Add user for autossh tunnel
+#
+RUN adduser --quiet --disabled-password --home /home/autossh autossh 2>&1
+
+
 # Prepare /app/ folder
 #
 WORKDIR /app/
 COPY . .
-RUN sed -i -e "s/localhost:27017/database:27017/" config/mongoid.yml; \
+RUN sed -i -e 's/localhost:27017/database:27017/' config/mongoid.yml; \
     chown -R app:app /app/; \
     /sbin/setuser app bundle install --path vendor/bundle; \
     cd /app/util/demographicsImporter/; \
@@ -79,13 +71,13 @@ RUN sed -i -e "s/localhost:27017/database:27017/" config/mongoid.yml; \
 RUN SRV=rails; \
     mkdir -p /etc/service/${SRV}/; \
     ( \
-      echo "#!/bin/bash"; \
-      echo ""; \
-      echo ""; \
-      echo "# Start service"; \
-      echo "#"; \
-      echo "cd /app/"; \
-      echo "exec /sbin/setuser app bundle exec rails server -p 3002"; \
+      echo '#!/bin/bash'; \
+      echo ''; \
+      echo ''; \
+      echo '# Start service'; \
+      echo '#'; \
+      echo 'cd /app/'; \
+      echo 'exec /sbin/setuser app bundle exec rails server -p 3002'; \
     )  \
       >> /etc/service/${SRV}/run; \
     chmod +x /etc/service/${SRV}/run
@@ -120,20 +112,18 @@ RUN SRV=support; \
 # Batch query scheduling in cron
 #
 RUN ( \
-      echo "# Run batch queries (23 PST = 7 UTC)"; \
-      echo "0 7 * * * /app/util/run_batch_queries.sh"; \
+      echo '# Run batch queries (23 PST = 7 UTC)'; \
+      echo '0 7 * * * /app/util/run_batch_queries.sh'; \
     ) \
       | crontab -
 
 
 # Run Command
 #
-CMD ["/sbin/my_init"]
+CMD ['/sbin/my_init']
 
 
 # Ports and volumes
 #
-EXPOSE 2774
-EXPOSE 3002
-#
+EXPOSE 2774 3002
 VOLUME /config
