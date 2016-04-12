@@ -83,20 +83,27 @@ RUN SRV=rails; \
     chmod +x /etc/service/${SRV}/run
 
 
-# Startup script for Delayed Job app
+# Support script for delayed_job and ssh-keygen
 #
-RUN SRV=delayed_job; \
+RUN SRV=support; \
     mkdir -p /etc/service/${SRV}/; \
     ( \
-      echo "#!/bin/bash"; \
-      echo ""; \
-      echo ""; \
-      echo "# Start delayed job"; \
-      echo "#"; \
-      echo "cd /app/"; \
-      echo "rm /app/tmp/pids/server.pid > /dev/null"; \
-      echo "exec /sbin/setuser app bundle exec /app/script/delayed_job run"; \
-      echo "/sbin/setuser app bundle exec /app/script/delayed_job stop > /dev/null"; \
+      echo '#!/bin/bash'; \
+      echo ''; \
+      echo ''; \
+      echo '# Create RSA key if not present'; \
+      echo 'if [ ! -s /config/ssh_host_rsa_key ]'; \
+      echo 'then'; \
+      echo '  ssh-keygen -b 4096 -t rsa -f /config/ssh_host_rsa_key -q -N ""'; \
+      echo 'fi'; \
+      echo ''; \
+      echo ''; \
+      echo '# Start delayed job'; \
+      echo '#'; \
+      echo 'cd /app/'; \
+      echo 'rm /app/tmp/pids/server.pid > /dev/null'; \
+      echo 'exec /sbin/setuser app bundle exec /app/script/delayed_job run'; \
+      echo '/sbin/setuser app bundle exec /app/script/delayed_job stop > /dev/null'; \
     )  \
       >> /etc/service/${SRV}/run; \
     chmod +x /etc/service/${SRV}/run
