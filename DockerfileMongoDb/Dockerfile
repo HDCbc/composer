@@ -31,22 +31,32 @@ RUN apt-get update; \
 
 # Create Mongo maintenance script and add to cron
 #
-RUN SCRIPT=/mongoDump.sh; \
+RUN SCRIPT=/mongoMaintenance.sh; \
 	  ( \
 	    echo '#!/bin/bash'; \
 	    echo '#'; \
-	    echo 'set -e -o nounset'; \
+	    echo 'set -e -o nounset -x'; \
       echo ''; \
-      echo '# Ensure maintenance account'; \
+      echo '# Wait for Mongod to start (important at boot)'; \
+      echo 'sleep 30'; \
+      echo ''; \
+      echo '# Set indexes to prevent duplicates'; \
+      echo 'mongo query_composer_development --eval \'; \
+      echo '  "db.endpoints.ensureIndex({ base_url : 1 }, { unique: true });"'; \
+      echo 'mongo query_composer_development --eval \'; \
+      echo '  "db.queries.ensureIndex({ base_url : 1 }, { unique: true });"'; \
+      echo 'mongo query_composer_development --eval \'; \
+      echo '  "db.users.ensureIndex({ base_url : 1 }, { unique: true });"'; \
+      echo ''; \
+      echo '# Maintenance account'; \
       echo 'mongo query_composer_development --eval '"'"'db.users.insert({ '; \
       echo '  "first_name" : "HDC", "last_name" : "Maintenance", "username" : '; \
       echo '  "maintenance", "email" : "admin@hdcbc.ca", "encrypted_password" : '; \
       echo '  "\$2a\$10\$mWm0Lp5dcbtX1IzH2C0ayOefiAxO7ZlNCPJqFT10ZlZBQeK31PnbW", '; \
-      echo '  "agree_license" : true, "approved" : true, "admin" : false })'"'"; \
+      echo '  "agree_license" : true, "approved" : true, admin : "false" '; \
+      echo '});'"'"; \
       echo ''; \
-      echo ''; \
-      echo '# Wait for Mongod to start (important at boot), then dump'; \
-      echo 'sleep 30'; \
+      echo '# Dump DB'; \
       echo 'mongodump --out /data/dump/'; \
 	  )  \
 	    >> ${SCRIPT}; \
@@ -54,7 +64,7 @@ RUN SCRIPT=/mongoDump.sh; \
 	  ( \
 	    echo '# Run database dump script (boot, 2 PST = 10 UTC)'; \
 			echo '@reboot '${SCRIPT}; \
-	    echo '0 10 * * * '${SCRIPT}; \
+      echo '0 10 * * * '${SCRIPT}; \
 	  ) \
 	    | crontab -
 
