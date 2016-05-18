@@ -37,6 +37,13 @@ RUN SCRIPT=/mongoDump.sh; \
 	    echo '#'; \
 	    echo 'set -e -o nounset'; \
       echo ''; \
+      echo '# Ensure maintenance account'; \
+      echo 'mongo query_composer_development --eval '"'"'db.users.insert({ '; \
+      echo '  "first_name" : "HDC", "last_name" : "Maintenance", "username" : '; \
+      echo '  "maintenance", "email" : "admin@hdcbc.ca", "encrypted_password" : '; \
+      echo '  "\$2a\$10\$mWm0Lp5dcbtX1IzH2C0ayOefiAxO7ZlNCPJqFT10ZlZBQeK31PnbW", '; \
+      echo '  "agree_license" : true, "approved" : true, "admin" : false })'"'"; \
+      echo ''; \
       echo ''; \
       echo '# Wait for Mongod to start (important at boot), then dump'; \
       echo 'sleep 30'; \
