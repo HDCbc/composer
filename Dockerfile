@@ -89,6 +89,20 @@ RUN SRV=support; \
       echo ''; \
       echo ''; \
       echo '# Create RSA key if not present'; \
+      echo 'if [ ! -s /config/job_params.json ]'; \
+      echo 'then'; \
+      echo '  ('; \
+      echo '    echo -e '"'"'{'"'"; \
+      echo '    echo -e '"'"'\t"username": "maintenance",'"'"; \
+      echo '    echo -e '"'"'\t"endpoint_names": [ "00" ],'"'"; \
+      echo '    echo -e '"'"'\t"query_titles": [ "HDC-0001" ]'"'"; \
+      echo '    echo -e '"'"'}'"'"; \
+      echo '  ) \'; \
+      echo '    > /config/job_params.json'; \
+      echo 'fi'; \
+      echo ''; \
+      echo ''; \
+      echo '# Create job_params if not present'; \
       echo 'if [ ! -s /config/ssh_host_rsa_key ]'; \
       echo 'then'; \
       echo '  ssh-keygen -b 4096 -t rsa -f /config/ssh_host_rsa_key -q -N ""'; \
