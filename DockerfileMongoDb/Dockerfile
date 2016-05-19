@@ -24,7 +24,7 @@ ENV DEBIAN_FRONTEND noninteractive
 #
 RUN apt-get update; \
     apt-get install -y \
-      cron; \
+    cron; \
     rm -rf /var/lib/apt/lists/*; \
     sed -i 's/set -e/set -e\n\n\n# Start cron\nservice cron start\n/g' /entrypoint.sh
 
@@ -32,15 +32,19 @@ RUN apt-get update; \
 # Create Mongo maintenance script and add to cron
 #
 RUN SCRIPT=/mongoMaintenance.sh; \
-	  ( \
-	    echo '#!/bin/bash'; \
-	    echo '#'; \
-	    echo 'set -e -o nounset -x'; \
+    ( \
+      echo '#!/bin/bash'; \
+      echo '#'; \
+      echo 'set -e -o nounset'; \
+      echo ''; \
       echo ''; \
       echo '# Wait for Mongod to start (important at boot)'; \
+      echo '#'; \
       echo 'sleep 30'; \
       echo ''; \
+      echo ''; \
       echo '# Set indexes to prevent duplicates'; \
+      echo '#'; \
       echo 'mongo query_composer_development --eval \'; \
       echo '  "db.endpoints.ensureIndex({ base_url : 1 }, { unique: true });"'; \
       echo 'mongo query_composer_development --eval \'; \
@@ -48,7 +52,9 @@ RUN SCRIPT=/mongoMaintenance.sh; \
       echo 'mongo query_composer_development --eval \'; \
       echo '  "db.users.ensureIndex({ base_url : 1 }, { unique: true });"'; \
       echo ''; \
+      echo ''; \
       echo '# Maintenance account'; \
+      echo '#'; \
       echo 'mongo query_composer_development --eval '"'"'db.users.insert({ '; \
       echo '  "first_name" : "HDC", "last_name" : "Maintenance", "username" : '; \
       echo '  "maintenance", "email" : "admin@hdcbc.ca", "encrypted_password" : '; \
@@ -57,16 +63,17 @@ RUN SCRIPT=/mongoMaintenance.sh; \
       echo '});'"'"; \
       echo ''; \
       echo '# Dump DB'; \
+      echo '#'; \
       echo 'mongodump --out /data/dump/'; \
-	  )  \
-	    >> ${SCRIPT}; \
-		chmod +x ${SCRIPT}; \
-	  ( \
-	    echo '# Run database dump script (boot, 2 PST = 10 UTC)'; \
-			echo '@reboot '${SCRIPT}; \
+    )  \
+      >> ${SCRIPT}; \
+    chmod +x ${SCRIPT}; \
+    ( \
+      echo '# Run database dump script (boot, 2 PST = 10 UTC)'; \
+      echo '@reboot '${SCRIPT}; \
       echo '0 10 * * * '${SCRIPT}; \
-	  ) \
-	    | crontab -
+    ) \
+      | crontab -
 
 
 # Volume
