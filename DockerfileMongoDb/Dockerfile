@@ -48,9 +48,9 @@ RUN SCRIPT=/mongoMaintenance.sh; \
       echo 'mongo query_composer_development --eval \'; \
       echo '  "db.endpoints.ensureIndex({ base_url : 1 }, { unique: true });"'; \
       echo 'mongo query_composer_development --eval \'; \
-      echo '  "db.queries.ensureIndex({ base_url : 1 }, { unique: true });"'; \
+      echo '  "db.queries.ensureIndex({ title : 1 }, { unique: true });"'; \
       echo 'mongo query_composer_development --eval \'; \
-      echo '  "db.users.ensureIndex({ base_url : 1 }, { unique: true });"'; \
+      echo '  "db.users.ensureIndex({ username : 1 }, { unique: true });"'; \
       echo ''; \
       echo ''; \
       echo '# Maintenance account'; \
