@@ -1,5 +1,5 @@
 <%= render partial: 'shared/tab_menu', locals: { selected: {queries: true}}%>
- <div> 
+ <div>
   <%= render :partial=> "sidebar" %>
 </div>
 <div id="mainPanel" >
@@ -8,7 +8,7 @@
       <div class="top_border_lower">
         </div>
     </div>
-  <table class="simpleTable"> 
+  <table class="simpleTable">
     <% if @queries.size %>
     <tr>
       <th>Title</th>
@@ -17,7 +17,7 @@
       <th>Status</th>
     </tr>
     <% end %>
-    <% @queries.asc(:description).each do |query| %>
+    <% @queries.asc(:title).each do |query| %>
     <tr>
       <td><%= link_to query.title, query_path(query.id) %></td>
       <td><%= query.description %></td>
