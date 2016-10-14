@@ -1,0 +1,9 @@
+{
+    "username": "maintenance",
+    "endpoint_names": [
+        "00"
+    ],
+    "query_titles": [
+        "HDC-0001"
+    ]
+}
