@@ -160,15 +160,6 @@ RUN SRV=support; \
 ################################################################################
 
 
-# Batch query scheduling in cron
-#
-RUN ( \
-      echo '# Run batch queries (23 PST = 7 UTC)'; \
-      echo '0 7 * * * /app/util/run_batch_queries.sh'; \
-    ) \
-      | crontab -
-
-
 # Create Mongo maintenance script and add to cron
 #
 RUN SCRIPT=/mongoMaintenance.sh; \
