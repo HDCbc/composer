@@ -10,14 +10,14 @@
 #   -v /path/for/composerDb/:/data/:rw \
 #   mongo:3.2.9
 # sudo docker run -d --name=composer -h composer --restart=always \
-#   --link composerdb:database \
+#   --link composerdb:composerdb \
 #   -p 2774:22 \
 #   -p 3002:3002 \
 #   -v </path/>/composer:/config:rw \
 #   hdcbc/composer
 #
 # Linked containers
-# - Mongo database:  --link composerdb:database
+# - Mongo database:  --link composerdb:composerdb
 #
 # External ports
 # - AutoSSH:         -p <hostPort>:22
@@ -84,7 +84,7 @@ RUN rm -f /etc/service/sshd/down; \
 #
 WORKDIR /app/
 COPY . .
-RUN sed -i -e 's/localhost:27017/database:27017/' config/mongoid.yml; \
+RUN sed -i -e 's/localhost:27017/composerdb:27017/' config/mongoid.yml; \
     chown -R app:app /app/; \
     /sbin/setuser app bundle install --path vendor/bundle
 
@@ -180,7 +180,7 @@ RUN SCRIPT=/mongoMaintenance.sh; \
     echo ''; \
     echo '# Mongo eval command with server, database and port'; \
     echo '#'; \
-    echo 'EVAL="/usr/bin/mongo database:27017/query_composer_development --eval"'; \
+    echo 'EVAL="/usr/bin/mongo composerdb/query_composer_development --eval"'; \
     echo ''; \
     echo ''; \
     echo '# Set indexes to prevent duplicates'; \
@@ -201,7 +201,7 @@ RUN SCRIPT=/mongoMaintenance.sh; \
     echo ''; \
     echo '# Dump DB'; \
     echo '#'; \
-    echo 'mongodump --host database --db query_composer_development --out /dump/'; \
+    echo 'mongodump --host composerdb --db query_composer_development --out /dump/'; \
   )  \
     >> ${SCRIPT}; \
   chmod +x ${SCRIPT}; \
@@ -218,12 +218,12 @@ RUN SCRIPT=/mongoMaintenance.sh; \
 ################################################################################
 
 
-# Run Command
-#
-CMD ["/sbin/my_init"]
-
-
 # Ports and volumes
 #
 EXPOSE 2774 3002
 VOLUME /config
+
+
+# Run Command
+#
+CMD ["/sbin/my_init"]
