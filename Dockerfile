@@ -41,9 +41,13 @@ MAINTAINER derek.roberts@gmail.com
 ENV TERM xterm
 ENV DEBIAN_FRONTEND noninteractive
 RUN adduser --disabled-password --gecos '' autossh
-RUN apt-get update; \
-    apt-get install --no-install-recommends -y \
-      mongodb-clients; \
+RUN sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927; \
+    echo "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" \
+      | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list; \
+    apt-get update; \
+    apt-get install -y \
+      mongodb-org-shell=3.2.9 \
+      mongodb-org-tools=3.2.9; \
     apt-get autoclean; \
     apt-get clean; \
     rm -rf \
@@ -197,7 +201,7 @@ RUN SCRIPT=/mongoMaintenance.sh; \
     echo ''; \
     echo '# Dump DB'; \
     echo '#'; \
-    echo 'mongodump --host composerdb --db query_composer_development --out /dump/'; \
+    echo 'mongodump --host database --db query_composer_development --out /dump/'; \
   )  \
     >> ${SCRIPT}; \
   chmod +x ${SCRIPT}; \
