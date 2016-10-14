@@ -4,13 +4,17 @@
 # Composer for aggregate data queries. Links to ComposerDb.
 #
 # Example:
-# sudo docker pull healthdatacoalition/composer
+# sudo docker pull mongo:3.2.9
+# sudo docker pull hdcbc/composer
+# sudo docker run -d --name composerDb -h composerDb --restart=always \
+#   -v /path/for/composerDb/:/data/:rw \
+#   mongo:3.2.9
 # sudo docker run -d --name=composer -h composer --restart=always \
 #   --link composerdb:database \
 #   -p 2774:22 \
 #   -p 3002:3002 \
 #   -v </path/>/composer:/config:rw \
-#   healthdatacoalition/composer
+#   hdcbc/composer
 #
 # Linked containers
 # - Mongo database:  --link composerdb:database
@@ -27,10 +31,28 @@ FROM phusion/passenger-ruby19
 MAINTAINER derek.roberts@gmail.com
 
 
-# Environment variables
+################################################################################
+# System
+################################################################################
+
+
+# Environment variables, users and packages
 #
 ENV TERM xterm
 ENV DEBIAN_FRONTEND noninteractive
+RUN adduser --disabled-password --gecos '' autossh
+RUN apt-get update; \
+    apt-get install --no-install-recommends -y \
+      mongodb-clients; \
+    apt-get autoclean; \
+    apt-get clean; \
+    rm -rf \
+      /var/tmp/* \
+      /var/lib/apt/lists/* \
+      /tmp/* \
+      /usr/share/doc/ \
+      /usr/share/doc-base/ \
+      /usr/share/man/
 
 
 # SSH config
@@ -49,9 +71,9 @@ RUN rm -f /etc/service/sshd/down; \
   ) | tee -a /etc/ssh/ssh_config
 
 
-# Add user for autossh tunnel
-#
-RUN adduser --quiet --disabled-password --home /home/autossh autossh 2>&1
+################################################################################
+# Application
+################################################################################
 
 
 # Prepare /app/ folder
@@ -61,6 +83,11 @@ COPY . .
 RUN sed -i -e 's/localhost:27017/database:27017/' config/mongoid.yml; \
     chown -R app:app /app/; \
     /sbin/setuser app bundle install --path vendor/bundle
+
+
+################################################################################
+# Runit Service Scripts
+################################################################################
 
 
 # Create startup script and make it executable
@@ -88,7 +115,7 @@ RUN SRV=support; \
       echo '#!/bin/bash'; \
       echo ''; \
       echo ''; \
-      echo '# Create RSA key if not present'; \
+      echo '# Create job_params.json if not present'; \
       echo 'if [ ! -s /config/job_params.json ]'; \
       echo 'then'; \
       echo '  ('; \
@@ -102,7 +129,11 @@ RUN SRV=support; \
       echo 'fi'; \
       echo ''; \
       echo ''; \
-      echo '# Create job_params if not present'; \
+      echo '# Create authorized_keys if not present'; \
+      echo 'touch /config/authorized_keys'; \
+      echo ''; \
+      echo ''; \
+      echo '# Create ssh keys if not present'; \
       echo 'if [ ! -s /config/ssh_host_rsa_key ]'; \
       echo 'then'; \
       echo '  ssh-keygen -b 4096 -t rsa -f /config/ssh_host_rsa_key -q -N ""'; \
@@ -120,6 +151,11 @@ RUN SRV=support; \
     chmod +x /etc/service/${SRV}/run
 
 
+################################################################################
+# Cron and Scripts
+################################################################################
+
+
 # Batch query scheduling in cron
 #
 RUN ( \
@@ -127,6 +163,55 @@ RUN ( \
       echo '0 7 * * * /app/util/run_batch_queries.sh'; \
     ) \
       | crontab -
+
+
+# Create Mongo maintenance script and add to cron
+#
+RUN SCRIPT=/mongoMaintenance.sh; \
+  ( \
+    echo '#!/bin/bash'; \
+    echo '#'; \
+    echo 'set -e -o nounset'; \
+    echo ''; \
+    echo ''; \
+    echo '# Mongo eval command with server, database and port'; \
+    echo '#'; \
+    echo 'EVAL="/usr/bin/mongo database:27017/query_composer_development --eval"'; \
+    echo ''; \
+    echo ''; \
+    echo '# Set indexes to prevent duplicates'; \
+    echo '#'; \
+    echo '${EVAL} "db.endpoints.ensureIndex({ base_url : 1 }, { unique: true });"'; \
+    echo '${EVAL} "db.queries.ensureIndex({ title : 1 }, { unique: true });"'; \
+    echo '${EVAL} "db.users.ensureIndex({ username : 1 }, { unique: true });"'; \
+    echo ''; \
+    echo ''; \
+    echo '# Maintenance account'; \
+    echo '#'; \
+    echo '${EVAL} '"'"'db.users.insert({ '; \
+    echo '  "first_name" : "HDC", "last_name" : "Maintenance", "username" : '; \
+    echo '  "maintenance", "email" : "admin@hdcbc.ca", "encrypted_password" : '; \
+    echo '  "\$2a\$10\$mWm0Lp5dcbtX1IzH2C0ayOefiAxO7ZlNCPJqFT10ZlZBQeK31PnbW", '; \
+    echo '  "agree_license" : true, "approved" : true, admin : "false" '; \
+    echo '});'"'"; \
+    echo ''; \
+    echo '# Dump DB'; \
+    echo '#'; \
+    echo 'mongodump --host composerdb --db query_composer_development --out /dump/'; \
+  )  \
+    >> ${SCRIPT}; \
+  chmod +x ${SCRIPT}; \
+  ( \
+    echo '# Run database dump script (boot, 2 PST = 10 UTC)'; \
+    echo '@reboot '${SCRIPT}; \
+    echo '0 10 * * * '${SCRIPT}; \
+  ) \
+    | crontab -
+
+
+################################################################################
+# Volumes, ports and start command
+################################################################################
 
 
 # Run Command
