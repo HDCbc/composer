@@ -117,6 +117,8 @@ RUN SRV=support; \
     mkdir -p /etc/service/${SRV}/; \
     ( \
       echo '#!/bin/bash'; \
+      echo '#'; \
+      echo 'set -eu'; \
       echo ''; \
       echo ''; \
       echo '# Create job_params.json if not present'; \
@@ -143,13 +145,22 @@ RUN SRV=support; \
       echo '  ssh-keygen -b 4096 -t rsa -f /config/ssh_host_rsa_key -q -N ""'; \
       echo 'fi'; \
       echo ''; \
-      echo ''; \
+      echo ""; \
+      echo "# Clean up any old instances of delayed job"; \
+      echo "#"; \
+      echo "DJOB_PIDFILE=/app/tmp/pids/server.pid"; \
+      echo "if [ -s \${DJOB_PIDFILE} ]"; \
+      echo "then"; \
+      echo '  /sbin/setuser app bundle exec /app/script/delayed_job stop || true'; \
+      echo "  kill \$( cat \${DJOB_PIDFILE}) || true"; \
+      echo "  rm \${DJOB_PIDFILE}"; \
+      echo "fi"; \
+      echo ""; \
+      echo ""; \
       echo '# Start delayed job'; \
       echo '#'; \
       echo 'cd /app/'; \
-      echo 'rm /app/tmp/pids/server.pid > /dev/null'; \
       echo 'exec /sbin/setuser app bundle exec /app/script/delayed_job run'; \
-      echo '/sbin/setuser app bundle exec /app/script/delayed_job stop > /dev/null'; \
     )  \
       >> /etc/service/${SRV}/run; \
     chmod +x /etc/service/${SRV}/run
@@ -166,7 +177,7 @@ RUN SCRIPT=/mongoMaintenance.sh; \
   ( \
     echo '#!/bin/bash'; \
     echo '#'; \
-    echo 'set -e -o nounset'; \
+    echo 'set -eu'; \
     echo ''; \
     echo ''; \
     echo '# Mongo eval command with server, database and port'; \
