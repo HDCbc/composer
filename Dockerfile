@@ -192,7 +192,7 @@ RUN SCRIPT=/mongoMaintenance.sh; \
     echo ''; \
     echo '# Dump DB'; \
     echo '#'; \
-    echo 'mongodump --host composerdb --db query_composer_development --out /dump/'; \
+    echo 'mongodump --host composerdb --db query_composer_development --out /private/'; \
   )  \
     >> ${SCRIPT}; \
   chmod +x ${SCRIPT}; \
@@ -212,7 +212,7 @@ RUN SCRIPT=/mongoMaintenance.sh; \
 # Ports and volumes
 #
 EXPOSE 2774 3002
-VOLUME /config
+VOLUME /config /private
 
 
 # Run Command
