@@ -17,7 +17,7 @@ def byteify(input):
 
 if len(sys.argv) != 2:
     print "The batch job parameter file must be specified as the sole argument"
-    print 'Usage: scheduled_job_post.py "job_params_file.json"'
+    print 'Usage: scheduled_jobs.py "job_params_file.json"'
     exit(1)
 with open(sys.argv[1], "r") as params_file:
     params_json = json.load(params_file)

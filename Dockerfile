@@ -94,24 +94,34 @@ RUN sed -i -e 's/localhost:27017/composerdb:27017/' config/mongoid.yml; \
 ################################################################################
 
 
-# Create startup script and make it executable
+# Rails
 #
 RUN SRV=rails; \
     mkdir -p /etc/service/${SRV}/; \
     ( \
       echo '#!/bin/bash'; \
+      echo '#'; \
+      echo 'set -eu'; \
       echo ''; \
       echo ''; \
-      echo '# Start service'; \
+      echo '# Stop any old instances'; \
+      echo '#'; \
+      echo 'PIDFILE=/app/tmp/pids/server.pid'; \
+      echo '[ ! -s ${PIDFILE} ]|| \'; \
+      echo '  kill $( cat ${PIDFILE}) || true'; \
+      echo ''; \
+      echo ''; \
+      echo '# Start rails, removing pidfile on exit or failure'; \
       echo '#'; \
       echo 'cd /app/'; \
-      echo 'exec /sbin/setuser app bundle exec rails server -p 3002'; \
+      echo '/sbin/setuser app bundle exec rails server -p 3002 || \'; \
+      echo '  rm ${PIDFILE}'; \
     )  \
       >> /etc/service/${SRV}/run; \
     chmod +x /etc/service/${SRV}/run
 
 
-# Support script for delayed_job and ssh-keygen
+# delayed_job and config
 #
 RUN SRV=support; \
     mkdir -p /etc/service/${SRV}/; \
@@ -121,46 +131,25 @@ RUN SRV=support; \
       echo 'set -eu'; \
       echo ''; \
       echo ''; \
-      echo '# Create job_params.json if not present'; \
-      echo 'if [ ! -s /config/job_params.json ]'; \
-      echo 'then'; \
-      echo '  ('; \
-      echo '    echo -e '"'"'{'"'"; \
-      echo '    echo -e '"'"'\t"username": "maintenance",'"'"; \
-      echo '    echo -e '"'"'\t"endpoint_names": [ "00" ],'"'"; \
-      echo '    echo -e '"'"'\t"query_titles": [ "HDC-0001" ]'"'"; \
-      echo '    echo -e '"'"'}'"'"; \
-      echo '  ) \'; \
-      echo '    > /config/job_params.json'; \
-      echo 'fi'; \
-      echo ''; \
-      echo ''; \
-      echo '# Create authorized_keys if not present'; \
-      echo 'touch /config/authorized_keys'; \
-      echo ''; \
-      echo ''; \
-      echo '# Create ssh keys if not present'; \
-      echo 'if [ ! -s /config/ssh_host_rsa_key ]'; \
-      echo 'then'; \
-      echo '  ssh-keygen -b 4096 -t rsa -f /config/ssh_host_rsa_key -q -N ""'; \
-      echo 'fi'; \
-      echo ''; \
-      echo ""; \
-      echo "# Clean up any old instances of delayed job"; \
-      echo "#"; \
-      echo "DJOB_PIDFILE=/app/tmp/pids/server.pid"; \
-      echo "if [ -s \${DJOB_PIDFILE} ]"; \
-      echo "then"; \
-      echo '  /sbin/setuser app bundle exec /app/script/delayed_job stop || true'; \
-      echo "  kill \$( cat \${DJOB_PIDFILE}) || true"; \
-      echo "  rm \${DJOB_PIDFILE}"; \
-      echo "fi"; \
-      echo ""; \
-      echo ""; \
-      echo '# Start delayed job'; \
+      echo '# Handle ssh config, if necessary'; \
       echo '#'; \
+      echo 'touch /config/authorized_keys'; \
+      echo '[ -s /config/ssh_host_rsa_key ]|| \'; \
+      echo '  ssh-keygen -b 4096 -t rsa -f /config/ssh_host_rsa_key -q -N ""'; \
+      echo ''; \
+      echo ''; \
+      echo '# Stop any old instances'; \
+      echo '#'; \
+      echo 'PIDFILE=/app/tmp/pids/delayed_job.pid'; \
+      echo '[ ! -s ${PIDFILE} ]|| \'; \
+      echo '  kill $( cat ${PIDFILE}) || true'; \
+      echo ''; \
+      echo ''; \
+      echo '# Start delayed job, removing pidfile on exit or failure'; \
+      echo "#"; \
       echo 'cd /app/'; \
-      echo 'exec /sbin/setuser app bundle exec /app/script/delayed_job run'; \
+      echo '/sbin/setuser app bundle exec /app/script/delayed_job run || \'; \
+      echo '  rm ${PIDFILE}'; \
     )  \
       >> /etc/service/${SRV}/run; \
     chmod +x /etc/service/${SRV}/run
@@ -203,7 +192,7 @@ RUN SCRIPT=/mongoMaintenance.sh; \
     echo ''; \
     echo '# Dump DB'; \
     echo '#'; \
-    echo 'mongodump --host composerdb --db query_composer_development --out /dump/'; \
+    echo 'mongodump --host composerdb --db query_composer_development --out /private/'; \
   )  \
     >> ${SCRIPT}; \
   chmod +x ${SCRIPT}; \
@@ -223,7 +212,7 @@ RUN SCRIPT=/mongoMaintenance.sh; \
 # Ports and volumes
 #
 EXPOSE 2774 3002
-VOLUME /config
+VOLUME /config /private
 
 
 # Run Command
