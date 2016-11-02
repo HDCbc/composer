@@ -46,6 +46,7 @@ RUN sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927; 
       | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list; \
     apt-get update; \
     apt-get install -y \
+      lynx \
       mongodb-org-shell=3.2.9 \
       mongodb-org-tools=3.2.9; \
     apt-get autoclean; \
