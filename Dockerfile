@@ -66,6 +66,7 @@ RUN rm -f /etc/service/sshd/down; \
   sed -i \
     -e 's/#HostKey \/etc/HostKey \/config/' \
     -e 's/^#AuthorizedKeysFile.*/AuthorizedKeysFile\t\/config\/authorized_keys/' \
+    -e 's/#PermitRootLogin.*/PermitRootLogin no/' \
     /etc/ssh/sshd_config; \
   ( \
       echo ''; \
