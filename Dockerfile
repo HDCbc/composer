@@ -65,9 +65,15 @@ RUN sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927; 
 RUN rm -f /etc/service/sshd/down; \
   sed -i \
     -e 's/#HostKey \/etc/HostKey \/config/' \
-    -e 's/^#AuthorizedKeysFile.*/AuthorizedKeysFile\t\/config\/authorized_keys/' \
     -e 's/#PermitRootLogin.*/PermitRootLogin no/' \
     /etc/ssh/sshd_config; \
+  ( \
+      echo ''; \
+      echo '# Set authorized_keys file for autossh user only'; \
+      echo '# '; \
+      echo 'Match User autossh'; \
+      echo 'AuthorizedKeysFile /config/authorized_keys'; \
+  ) | tee -a /etc/ssh/sshd_config; \
   ( \
       echo ''; \
       echo '# Keep connections alive, 60 second interval'; \
